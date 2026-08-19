@@ -268,6 +268,8 @@ const FOOTER_HTML = String.raw`
     <a data-net="linkedin" aria-label="Share on LinkedIn" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="30" height="30"><rect width="24" height="24" rx="5" fill="#0A66C2"/><text x="12" y="16.5" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="11" fill="#fff">in</text></svg></a>
     <a data-net="telegram" aria-label="Share on Telegram" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="30" height="30"><rect width="24" height="24" rx="5" fill="#229ED9"/><path fill="#fff" d="M5.5 11.8l12.1-5.1c.6-.25 1.15.3.95.9l-2.35 9.3c-.15.6-.7.75-1.15.4l-2.85-2.15-1.45 1.45c-.35.35-.9.2-1.05-.25l-.95-2.9-3.2-1.05c-.6-.2-.6-.95-.05-1.2z"/></svg></a>
     <a data-net="bluesky" aria-label="Share on Bluesky" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="30" height="30"><rect width="24" height="24" rx="5" fill="#1185FE"/><path fill="#fff" d="M12 10.8C10.4 8 7.6 5.6 6 6c-1.4.4-1 3.6.3 5.4.8 1.2 2.3 2.3 3.7 2.7-1.4.5-2.6 1.5-2.3 2.8.4 1.4 2.7.8 4.3-1.4 1.6 2.2 3.9 2.8 4.3 1.4.3-1.3-.9-2.3-2.3-2.8 1.4-.4 2.9-1.5 3.7-2.7 1.3-1.8 1.7-5 .3-5.4-1.6-.4-4.4 2-6 4.8z"/></svg></a>
+    <a data-net="instagram" href="https://www.instagram.com/" aria-label="Share on Instagram (copies the message to paste)" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="30" height="30"><defs><linearGradient id="igg" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#FEDA75"/><stop offset=".35" stop-color="#D62976"/><stop offset=".7" stop-color="#962FBF"/><stop offset="1" stop-color="#4F5BD5"/></linearGradient></defs><rect width="24" height="24" rx="5" fill="url(#igg)"/><rect x="6" y="6" width="12" height="12" rx="3.5" fill="none" stroke="#fff" stroke-width="1.6"/><circle cx="12" cy="12" r="2.8" fill="none" stroke="#fff" stroke-width="1.6"/><circle cx="15.4" cy="8.6" r="1" fill="#fff"/></svg></a>
+    <span class="sharenote" id="shareNote"></span>
   </div>
   <p class="fblink"><a href="/feedback">{{feedbackLink}}</a></p>
   <div class="brand">
@@ -388,6 +390,7 @@ const PAGE_HTML = String.raw`<!doctype html>
   .share a { display: inline-flex; border-radius: 5px; }
   .share a:hover { outline: 2px solid #155ab6; outline-offset: 1px; }
   .sharelabel { font-weight: 600; font-size: 15px; margin-right: 2px; }
+  .sharenote { color: #1c7c3c; font-size: 13px; font-weight: 600; }
   .fblink { font-size: 15px; }
   .fblink a { color: #155ab6; font-weight: 600; }
   .brand { display: flex; align-items: center; gap: 14px; margin-top: 14px; padding: 14px;
@@ -573,6 +576,14 @@ ${PARSER_SOURCE}
     for (var s = 0; s < shareAnchors.length; s++) {
       var net = shareAnchors[s].getAttribute('data-net');
       if (shareMap[net]) shareAnchors[s].setAttribute('href', shareMap[net]);
+    }
+    var ig = shareRow.querySelector('a[data-net="instagram"]');
+    if (ig) {
+      ig.addEventListener('click', function () {
+        if (navigator.clipboard) navigator.clipboard.writeText(stext + ' ' + surl);
+        var note = document.getElementById('shareNote');
+        if (note) note.textContent = 'Message copied - paste it into your Instagram post.';
+      });
     }
   }
 
