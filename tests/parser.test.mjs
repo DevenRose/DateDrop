@@ -121,6 +121,15 @@ assert.ok(pageText.includes('A free tool offered by DRVI for anyone to use'));
 assert.ok(pageText.includes('deven@devenroseventures.com'));
 assert.ok(pageText.includes('Report a bug or suggest an improvement'));
 
+// Dark/light: the toggle button, the saved-choice script, and the dark palette are served.
+assert.ok(pageText.includes('id="theme"'), 'theme toggle button missing');
+assert.ok(pageText.includes("localStorage.getItem('dd-theme')"), 'saved-theme script missing');
+assert.ok(pageText.includes('prefers-color-scheme: dark'), 'dark palette missing');
+const fbThemed = await (await worker.fetch(new Request('https://datedrop.example/feedback'))).text();
+assert.ok(fbThemed.includes('prefers-color-scheme: dark'), 'feedback page dark palette missing');
+// The DRVI card sits at the top of the page, before the headline.
+assert.ok(pageText.indexOf('class="brand"') < pageText.indexOf('<h1>'), 'brand card is not at the top');
+
 // The share row: five platforms, carrying the pre-written message.
 assert.ok(pageText.includes('Check out this neat little tool that turns written dates into calendar links'));
 for (const net of ['facebook', 'x', 'whatsapp', 'linkedin', 'telegram', 'bluesky', 'instagram']) {

@@ -272,14 +272,6 @@ const FOOTER_HTML = String.raw`
     <span class="sharenote" id="shareNote"></span>
   </div>
   <p class="fblink"><a href="/feedback">{{feedbackLink}}</a></p>
-  <div class="brand">
-    <img src="${'${LOGO}'}" alt="DRVI logo" width="56" height="56">
-    <div class="brandtext">
-      <div>{{attribution1}}</div>
-      <div>{{attribution2}}
-        <a href="mailto:deven@devenroseventures.com">deven@devenroseventures.com</a></div>
-    </div>
-  </div>
 </footer>
 `;
 
@@ -357,50 +349,90 @@ const PAGE_HTML = String.raw`<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{heading}}</title>
 <style>
-  body { margin: 0; background: #f5f6f8; color: #1c2430; font-family: 'Segoe UI', Arial, sans-serif; }
-  main { max-width: 760px; margin: 0 auto; padding: 28px 18px 40px; }
+  :root {
+    --bg: #f5f6f8; --ink: #1c2430; --muted: #4a5568; --faint: #6a7686;
+    --card: #ffffff; --line: #c3cad4; --card-line: #d8dee6;
+    --accent: #155ab6; --btn-bg: #155ab6; --btn-hover: #124c99; --btn-ink: #ffffff;
+    --ok: #1c7c3c; --err: #b02a2a; --err-bg: #fdf3f3; --err-line: #e05252;
+    --all-bg: #f2f7fe;
+    --brand-bg: #101010; --brand-ink: #e8e8e8; --brand-link: #ffb35c;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14181e; --ink: #e8ecf2; --muted: #aab6c4; --faint: #93a0b0;
+      --card: #1d242d; --line: #3a4552; --card-line: #313a46;
+      --accent: #7db3ff; --btn-bg: #2e6ad1; --btn-hover: #3d79e0; --btn-ink: #ffffff;
+      --ok: #6fce8f; --err: #ff9b9b; --err-bg: #2c1a1d; --err-line: #a04747;
+      --all-bg: #1a2536;
+      --brand-bg: #101010; --brand-ink: #e8e8e8; --brand-link: #ffb35c;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #14181e; --ink: #e8ecf2; --muted: #aab6c4; --faint: #93a0b0;
+    --card: #1d242d; --line: #3a4552; --card-line: #313a46;
+    --accent: #7db3ff; --btn-bg: #2e6ad1; --btn-hover: #3d79e0; --btn-ink: #ffffff;
+    --ok: #6fce8f; --err: #ff9b9b; --err-bg: #2c1a1d; --err-line: #a04747;
+    --all-bg: #1a2536;
+    --brand-bg: #101010; --brand-ink: #e8e8e8; --brand-link: #ffb35c;
+  }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: 'Segoe UI', Arial, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 20px 18px 16px; position: relative; }
   h1 { font-size: 26px; margin: 0 0 4px; }
-  .lead { margin: 0 0 10px; color: #4a5568; font-size: 16px; }
-  ol.how { margin: 0 0 8px; padding-left: 22px; color: #4a5568; font-size: 15px; }
+  #theme { margin-left: auto; flex-shrink: 0; width: 42px; height: 42px;
+    border-radius: 50%; border: 1px solid #3a4552; background: #1d242d;
+    font-size: 18px; cursor: pointer; line-height: 1; }
+  .lead { margin: 0 0 10px; color: var(--muted); font-size: 16px; }
+  ol.how { margin: 0 0 8px; padding-left: 22px; color: var(--muted); font-size: 15px; }
   ol.how li { margin: 2px 0; }
   label { display: block; font-weight: 600; margin: 18px 0 6px; font-size: 15px; }
   input, textarea { width: 100%; box-sizing: border-box; font: inherit; font-size: 16px;
-    padding: 10px 12px; border: 1px solid #c3cad4; border-radius: 8px; background: #fff; }
+    padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px;
+    background: var(--card); color: var(--ink); }
   textarea { min-height: 170px; resize: vertical; }
   #summary { margin: 16px 0 6px; font-weight: 600; }
-  .row { background: #fff; border: 1px solid #d8dee6; border-radius: 10px;
+  .row { background: var(--card); border: 1px solid var(--card-line); border-radius: 10px;
     padding: 12px 14px; margin: 10px 0; font-size: 15px; }
-  .row.bad { border-color: #e05252; background: #fdf3f3; }
-  .row.all { border-color: #155ab6; background: #f2f7fe; }
-  .err { color: #b02a2a; margin-top: 4px; }
-  .note { color: #4a5568; }
-  .tiny { color: #6a7686; font-size: 13px; margin-top: 4px; }
+  .row.bad { border-color: var(--err-line); background: var(--err-bg); }
+  .row.all { border-color: var(--accent); background: var(--all-bg); }
+  .err { color: var(--err); margin-top: 4px; }
+  .note { color: var(--muted); }
+  .tiny { color: var(--faint); font-size: 13px; margin-top: 4px; }
   .links { margin-top: 8px; }
-  .links a { display: inline-block; margin-right: 16px; color: #155ab6; font-weight: 600;
+  .links a { display: inline-block; margin-right: 16px; color: var(--accent); font-weight: 600;
     text-decoration: none; }
   .links a:hover { text-decoration: underline; }
   #copy { margin-top: 14px; font: inherit; font-size: 17px; font-weight: 600;
-    padding: 12px 22px; border: 0; border-radius: 10px; background: #155ab6; color: #fff;
+    padding: 12px 22px; border: 0; border-radius: 10px; background: var(--btn-bg); color: var(--btn-ink);
     cursor: pointer; display: none; }
-  #copy:hover { background: #124c99; }
-  #copied { margin-left: 12px; color: #1c7c3c; font-weight: 600; }
-  .privacy { margin-top: 26px; color: #6a7686; font-size: 13px; }
-  footer { max-width: 760px; margin: 0 auto; padding: 0 18px 50px; }
+  #copy:hover { background: var(--btn-hover); }
+  #copied { margin-left: 12px; color: var(--ok); font-weight: 600; }
+  .privacy { margin: 8px 0 0; color: var(--faint); font-size: 13px; }
+  footer { max-width: 760px; margin: 0 auto; padding: 0 18px 24px; }
   .share { display: flex; align-items: center; gap: 10px; margin: 4px 0 14px; }
   .share a { display: inline-flex; border-radius: 5px; }
-  .share a:hover { outline: 2px solid #155ab6; outline-offset: 1px; }
+  .share a:hover { outline: 2px solid var(--accent); outline-offset: 1px; }
   .sharelabel { font-weight: 600; font-size: 15px; margin-right: 2px; }
-  .sharenote { color: #1c7c3c; font-size: 13px; font-weight: 600; }
+  .sharenote { color: var(--ok); font-size: 13px; font-weight: 600; }
   .fblink { font-size: 15px; }
-  .fblink a { color: #155ab6; font-weight: 600; }
-  .brand { display: flex; align-items: center; gap: 14px; margin-top: 14px; padding: 14px;
-    background: #101010; border-radius: 12px; color: #e8e8e8; font-size: 14px; line-height: 1.5; }
+  .fblink a { color: var(--accent); font-weight: 600; }
+  .brand { display: flex; align-items: center; gap: 14px; margin: 0 0 18px; padding: 14px;
+    background: var(--brand-bg); border-radius: 12px; color: var(--brand-ink); font-size: 14px; line-height: 1.5; }
   .brand img { border-radius: 8px; flex-shrink: 0; }
-  .brand a { color: #ffb35c; }
+  .brand a { color: var(--brand-link); }
 </style>
+<script>(function(){try{var t=localStorage.getItem('dd-theme');if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
 </head>
 <body>
 <main>
+  <div class="brand">
+    <img src="${LOGO_DATA}" alt="DRVI logo" width="56" height="56">
+    <div class="brandtext">
+      <div>{{attribution1}}</div>
+      <div>{{attribution2}}
+        <a href="mailto:deven@devenroseventures.com">deven@devenroseventures.com</a></div>
+    </div>
+    <button id="theme" aria-label="Switch between dark and light"></button>
+  </div>
   <h1>{{heading}}</h1>
   <p class="lead">{{lead}}</p>
   <ol class="how">
@@ -587,6 +619,23 @@ ${PARSER_SOURCE}
     }
   }
 
+  var themeBtn = document.getElementById('theme');
+  function effectiveTheme() {
+    var t = document.documentElement.getAttribute('data-theme');
+    if (t === 'dark' || t === 'light') return t;
+    return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+  }
+  function paintThemeBtn() {
+    themeBtn.textContent = effectiveTheme() === 'dark' ? '☀️' : '🌙';
+  }
+  themeBtn.addEventListener('click', function () {
+    var next = effectiveTheme() === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem('dd-theme', next); } catch (e) {}
+    paintThemeBtn();
+  });
+  paintThemeBtn();
+
   titleEl.addEventListener('input', render);
   datesEl.addEventListener('input', render);
   render();
@@ -596,6 +645,33 @@ ${PARSER_SOURCE}
 </html>
 `;
 
+// The colors for every page, light and dark. The dark palette keeps text at readable
+// contrast on the dark background. A visitor's device setting decides the theme unless
+// they pressed the toggle, which saves their choice in their own browser.
+const THEME_CSS = String.raw`
+  :root {
+    --bg: #f5f6f8; --ink: #1c2430; --muted: #4a5568; --faint: #6a7686;
+    --card: #ffffff; --line: #c3cad4; --card-line: #d8dee6;
+    --accent: #155ab6; --btn-bg: #155ab6; --btn-hover: #124c99; --btn-ink: #ffffff;
+    --ok: #1c7c3c; --err: #b02a2a; --err-bg: #fdf3f3; --err-line: #e6c6ce; --warn: #b06a00;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14181e; --ink: #e8ecf2; --muted: #aab6c4; --faint: #93a0b0;
+      --card: #1d242d; --line: #3a4552; --card-line: #313a46;
+      --accent: #7db3ff; --btn-bg: #2e6ad1; --btn-hover: #3d79e0; --btn-ink: #ffffff;
+      --ok: #6fce8f; --err: #ff9b9b; --err-bg: #2c1a1d; --err-line: #a04747; --warn: #e0a24d;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #14181e; --ink: #e8ecf2; --muted: #aab6c4; --faint: #93a0b0;
+    --card: #1d242d; --line: #3a4552; --card-line: #313a46;
+    --accent: #7db3ff; --btn-bg: #2e6ad1; --btn-hover: #3d79e0; --btn-ink: #ffffff;
+    --ok: #6fce8f; --err: #ff9b9b; --err-bg: #2c1a1d; --err-line: #a04747; --warn: #e0a24d;
+  }
+`;
+const THEME_SCRIPT = '<script>(function(){try{var t=localStorage.getItem(\'dd-theme\');if(t===\'dark\'||t===\'light\')document.documentElement.setAttribute(\'data-theme\',t);}catch(e){}})();</script>';
+
 const FEEDBACK_HTML = String.raw`<!doctype html>
 <html lang="en">
 <head>
@@ -603,23 +679,26 @@ const FEEDBACK_HTML = String.raw`<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DateDrop feedback</title>
 <style>
-  body { margin: 0; background: #f5f6f8; color: #1c2430; font-family: 'Segoe UI', Arial, sans-serif; }
+${THEME_CSS}
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: 'Segoe UI', Arial, sans-serif; }
   main { max-width: 620px; margin: 0 auto; padding: 28px 18px 60px; }
   h1 { font-size: 24px; margin: 0 0 6px; }
-  p { color: #4a5568; }
+  p { color: var(--muted); }
   label { display: block; font-weight: 600; margin: 16px 0 6px; font-size: 15px; }
   .kind label { display: inline-block; margin: 0 18px 0 4px; font-weight: 500; }
   textarea, input[type=text] { width: 100%; box-sizing: border-box; font: inherit; font-size: 16px;
-    padding: 10px 12px; border: 1px solid #c3cad4; border-radius: 8px; background: #fff; }
+    padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px;
+    background: var(--card); color: var(--ink); }
   textarea { min-height: 140px; resize: vertical; }
   button { margin-top: 16px; font: inherit; font-size: 17px; font-weight: 600;
-    padding: 12px 22px; border: 0; border-radius: 10px; background: #155ab6; color: #fff; cursor: pointer; }
-  button:hover { background: #124c99; }
+    padding: 12px 22px; border: 0; border-radius: 10px; background: var(--btn-bg); color: var(--btn-ink); cursor: pointer; }
+  button:hover { background: var(--btn-hover); }
   #msg { margin-top: 14px; font-weight: 600; }
-  #msg.ok { color: #1c7c3c; }
-  #msg.err { color: #b02a2a; }
-  a { color: #155ab6; }
+  #msg.ok { color: var(--ok); }
+  #msg.err { color: var(--err); }
+  a { color: var(--accent); }
 </style>
+${THEME_SCRIPT}
 </head>
 <body>
 <main>
@@ -740,21 +819,23 @@ function editorLoginPage(message, status) {
 <meta name="robots" content="noindex, nofollow">
 <title>DateDrop editor</title>
 <style>
+${THEME_CSS}
   * { box-sizing: border-box; }
   body { margin: 0; min-height: 100dvh; display: grid; place-items: center; padding: 24px;
-         background: #f5f6f8; color: #1c2430; font: 16px/1.6 'Segoe UI', Arial, sans-serif; }
-  form { width: 100%; max-width: 22rem; background: #fff; border: 1px solid #d8dee6;
+         background: var(--bg); color: var(--ink); font: 16px/1.6 'Segoe UI', Arial, sans-serif; }
+  form { width: 100%; max-width: 22rem; background: var(--card); border: 1px solid var(--card-line);
          border-radius: 14px; padding: 28px 24px; }
   h1 { font-size: 1.15rem; margin: 0 0 .35rem; }
-  p.sub { margin: 0 0 1.5rem; color: #6a7686; font-size: .85rem; }
-  label { display: block; font-size: .8rem; color: #6a7686; margin-bottom: .4rem; }
-  input { width: 100%; padding: .8rem .9rem; font-size: 1rem; border: 1px solid #c3cad4;
-          border-radius: .55rem; }
+  p.sub { margin: 0 0 1.5rem; color: var(--faint); font-size: .85rem; }
+  label { display: block; font-size: .8rem; color: var(--faint); margin-bottom: .4rem; }
+  input { width: 100%; padding: .8rem .9rem; font-size: 1rem; border: 1px solid var(--line);
+          border-radius: .55rem; background: var(--card); color: var(--ink); }
   button { width: 100%; margin-top: .9rem; padding: .8rem; font-size: 1rem; font-weight: 600;
-           color: #fff; background: #155ab6; border: 0; border-radius: .55rem; cursor: pointer; }
+           color: var(--btn-ink); background: var(--btn-bg); border: 0; border-radius: .55rem; cursor: pointer; }
   .err { margin-top: .9rem; padding: .6rem .75rem; border-radius: .5rem; font-size: .85rem;
-         color: #7a2233; background: #f7e9ec; border: 1px solid #e6c6ce; }
+         color: var(--err); background: var(--err-bg); border: 1px solid var(--err-line); }
 </style>
+${THEME_SCRIPT}
 </head><body>
 <form method="POST" action="/editor/login">
   <h1>DateDrop editor</h1>
@@ -784,23 +865,26 @@ function editorPage(merged, overrides) {
 <meta name="robots" content="noindex, nofollow">
 <title>DateDrop editor</title>
 <style>
-  body { margin: 0; background: #f5f6f8; color: #1c2430; font: 16px/1.6 'Segoe UI', Arial, sans-serif; }
+${THEME_CSS}
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 'Segoe UI', Arial, sans-serif; }
   main { max-width: 720px; margin: 0 auto; padding: 28px 18px 60px; }
   h1 { font-size: 24px; margin: 0 0 6px; }
-  p.sub { color: #4a5568; margin: 0 0 18px; }
+  p.sub { color: var(--muted); margin: 0 0 18px; }
   label { display: block; font-weight: 600; margin: 18px 0 4px; font-size: 15px; }
-  .edited { color: #b06a00; font-weight: 600; font-size: 13px; }
+  .edited { color: var(--warn); font-weight: 600; font-size: 13px; }
   textarea { width: 100%; box-sizing: border-box; font: inherit; font-size: 15px;
-             padding: 8px 10px; border: 1px solid #c3cad4; border-radius: 8px; background: #fff; }
-  .orig { color: #8a94a3; font-size: 12.5px; margin-top: 2px; }
+             padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px;
+             background: var(--card); color: var(--ink); }
+  .orig { color: var(--faint); font-size: 12.5px; margin-top: 2px; }
   button { margin-top: 22px; font: inherit; font-size: 17px; font-weight: 600;
-           padding: 12px 22px; border: 0; border-radius: 10px; background: #155ab6;
-           color: #fff; cursor: pointer; }
+           padding: 12px 22px; border: 0; border-radius: 10px; background: var(--btn-bg);
+           color: var(--btn-ink); cursor: pointer; }
   #msg { margin-left: 12px; font-weight: 600; }
-  #msg.ok { color: #1c7c3c; } #msg.err { color: #b02a2a; }
+  #msg.ok { color: var(--ok); } #msg.err { color: var(--err); }
   .links { margin-top: 22px; font-size: 14px; }
-  .links a { color: #155ab6; margin-right: 16px; }
+  .links a { color: var(--accent); margin-right: 16px; }
 </style>
+${THEME_SCRIPT}
 </head><body>
 <main>
   <h1>Edit the words on DateDrop</h1>
