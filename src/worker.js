@@ -260,6 +260,14 @@ const LOGO_DATA = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHgAAAB4CAYAAAA
 
 const FOOTER_HTML = String.raw`
 <footer>
+  <div class="share" id="shareRow" data-sharetext="{{shareText}}">
+    <span class="sharelabel">Share:</span>
+    <a data-net="facebook" aria-label="Share on Facebook" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="30" height="30"><rect width="24" height="24" rx="5" fill="#1877F2"/><text x="12" y="17" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="13" fill="#fff">f</text></svg></a>
+    <a data-net="x" aria-label="Share on X" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="30" height="30"><rect width="24" height="24" rx="5" fill="#000"/><path d="M6.5 6l11 12M17.5 6l-11 12" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg></a>
+    <a data-net="whatsapp" aria-label="Share on WhatsApp" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="30" height="30"><rect width="24" height="24" rx="5" fill="#25D366"/><path fill="#fff" d="M7.4 6.2c.6-.6 1.5-.6 2 .1l1 1.3c.4.6.3 1.4-.2 1.9l-.5.5c.5 1 1.4 1.9 2.4 2.4l.5-.5c.5-.5 1.3-.6 1.9-.2l1.3 1c.7.5.7 1.4.1 2l-.7.7c-.6.6-1.5.8-2.3.5-1.7-.6-3.3-1.6-4.6-2.9-1.3-1.3-2.3-2.9-2.9-4.6-.3-.8-.1-1.7.5-2.3z"/></svg></a>
+    <a data-net="linkedin" aria-label="Share on LinkedIn" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="30" height="30"><rect width="24" height="24" rx="5" fill="#0A66C2"/><text x="12" y="16.5" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="11" fill="#fff">in</text></svg></a>
+    <a data-net="telegram" aria-label="Share on Telegram" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="30" height="30"><rect width="24" height="24" rx="5" fill="#229ED9"/><path fill="#fff" d="M5.5 11.8l12.1-5.1c.6-.25 1.15.3.95.9l-2.35 9.3c-.15.6-.7.75-1.15.4l-2.85-2.15-1.45 1.45c-.35.35-.9.2-1.05-.25l-.95-2.9-3.2-1.05c-.6-.2-.6-.95-.05-1.2z"/></svg></a>
+  </div>
   <p class="fblink"><a href="/feedback">{{feedbackLink}}</a></p>
   <div class="brand">
     <img src="${'${LOGO}'}" alt="DRVI logo" width="56" height="56">
@@ -288,7 +296,8 @@ const TEXT_DEFAULTS = {
   privacy: 'Nothing you type here is saved or sent anywhere. This page only builds links.',
   feedbackLink: 'Report a bug or suggest an improvement',
   attribution1: 'A free tool offered by DRVI for anyone to use.',
-  attribution2: 'If you have software development needs, consider reaching out!'
+  attribution2: 'If you have software development needs, consider reaching out!',
+  shareText: 'Check out this neat little tool that turns written dates into calendar links'
 };
 
 const FIELD_LABELS = {
@@ -303,7 +312,8 @@ const FIELD_LABELS = {
   privacy: 'The privacy line at the bottom',
   feedbackLink: 'The feedback link in the footer',
   attribution1: 'Attribution line 1',
-  attribution2: 'Attribution line 2 (the email address stays attached after it)'
+  attribution2: 'Attribution line 2 (the email address stays attached after it)',
+  shareText: 'The message sent along by the share icons'
 };
 
 function escHtml(s) {
@@ -373,6 +383,10 @@ const PAGE_HTML = String.raw`<!doctype html>
   #copied { margin-left: 12px; color: #1c7c3c; font-weight: 600; }
   .privacy { margin-top: 26px; color: #6a7686; font-size: 13px; }
   footer { max-width: 760px; margin: 0 auto; padding: 0 18px 50px; }
+  .share { display: flex; align-items: center; gap: 10px; margin: 4px 0 14px; }
+  .share a { display: inline-flex; border-radius: 5px; }
+  .share a:hover { outline: 2px solid #155ab6; outline-offset: 1px; }
+  .sharelabel { font-weight: 600; font-size: 15px; margin-right: 2px; }
   .fblink { font-size: 15px; }
   .fblink a { color: #155ab6; font-weight: 600; }
   .brand { display: flex; align-items: center; gap: 14px; margin-top: 14px; padding: 14px;
@@ -538,6 +552,27 @@ ${PARSER_SOURCE}
       failed();
     }
   });
+
+  var shareRow = document.getElementById('shareRow');
+  if (shareRow) {
+    var stext = shareRow.getAttribute('data-sharetext') || '';
+    var surl = window.location.origin + '/';
+    var shareMap = {
+      facebook: 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(surl) +
+        '&quote=' + encodeURIComponent(stext),
+      x: 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(stext) +
+        '&url=' + encodeURIComponent(surl),
+      whatsapp: 'https://wa.me/?text=' + encodeURIComponent(stext + ' ' + surl),
+      linkedin: 'https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(surl),
+      telegram: 'https://t.me/share/url?url=' + encodeURIComponent(surl) +
+        '&text=' + encodeURIComponent(stext)
+    };
+    var shareAnchors = shareRow.querySelectorAll('a[data-net]');
+    for (var s = 0; s < shareAnchors.length; s++) {
+      var net = shareAnchors[s].getAttribute('data-net');
+      if (shareMap[net]) shareAnchors[s].setAttribute('href', shareMap[net]);
+    }
+  }
 
   titleEl.addEventListener('input', render);
   datesEl.addEventListener('input', render);

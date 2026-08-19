@@ -121,6 +121,12 @@ assert.ok(pageText.includes('A free tool offered by DRVI for anyone to use'));
 assert.ok(pageText.includes('deven@devenroseventures.com'));
 assert.ok(pageText.includes('Report a bug or suggest an improvement'));
 
+// The share row: five platforms, carrying the pre-written message.
+assert.ok(pageText.includes('Check out this neat little tool that turns written dates into calendar links'));
+for (const net of ['facebook', 'x', 'whatsapp', 'linkedin', 'telegram']) {
+  assert.ok(pageText.includes('data-net="' + net + '"'), 'share icon missing: ' + net);
+}
+
 // Single-event calendar file (the original link form keeps working).
 const ics = await worker.fetch(new Request(a));
 assert.equal(ics.status, 200);
