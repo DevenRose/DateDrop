@@ -123,7 +123,7 @@ assert.ok(pageText.includes('Report a bug or suggest an improvement'));
 
 // The share row: five platforms, carrying the pre-written message.
 assert.ok(pageText.includes('Check out this neat little tool that turns written dates into calendar links'));
-for (const net of ['facebook', 'x', 'whatsapp', 'linkedin', 'telegram']) {
+for (const net of ['facebook', 'x', 'whatsapp', 'linkedin', 'telegram', 'bluesky']) {
   assert.ok(pageText.includes('data-net="' + net + '"'), 'share icon missing: ' + net);
 }
 
