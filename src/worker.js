@@ -389,8 +389,8 @@ const PAGE_HTML = String.raw`<!doctype html>
   input, textarea { width: 100%; box-sizing: border-box; font: inherit; font-size: 16px;
     padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px;
     background: var(--card); color: var(--ink); }
-  textarea { min-height: 170px; resize: vertical; }
-  #summary { margin: 16px 0 6px; font-weight: 600; }
+  textarea { min-height: 76px; resize: vertical; overflow: hidden; }
+  #summary { margin: 14px 0 6px; font-weight: 600; }
   .row { background: var(--card); border: 1px solid var(--card-line); border-radius: 10px;
     padding: 12px 14px; margin: 10px 0; font-size: 15px; }
   .row.bad { border-color: var(--err-line); background: var(--err-bg); }
@@ -637,8 +637,16 @@ ${PARSER_SOURCE}
   });
   paintThemeBtn();
 
+  // The dates box starts three lines tall and grows with the list, so no empty
+  // space sits under a short list and a long list never needs scrolling inside it.
+  function growDatesBox() {
+    datesEl.style.height = 'auto';
+    datesEl.style.height = (datesEl.scrollHeight + 2) + 'px';
+  }
+
   titleEl.addEventListener('input', render);
-  datesEl.addEventListener('input', render);
+  datesEl.addEventListener('input', function () { growDatesBox(); render(); });
+  growDatesBox();
   render();
 })();
 </script>
