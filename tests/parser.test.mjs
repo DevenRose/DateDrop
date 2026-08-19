@@ -121,6 +121,46 @@ assert.ok(pageText.includes('A free tool offered by DRVI for anyone to use'));
 assert.ok(pageText.includes('deven@devenroseventures.com'));
 assert.ok(pageText.includes('Report a bug or suggest an improvement'));
 
+// The zero-data line sits between the how-to steps and the event-name box, and the
+// tip jar sits at the bottom where the old privacy line was.
+assert.ok(pageText.includes('ZERO data collection; this page ONLY builds links!'));
+const zeroPos = pageText.indexOf('class="zero"');
+assert.ok(zeroPos > pageText.indexOf('</ol>') && zeroPos < pageText.indexOf('id="title"'), 'zero line misplaced');
+assert.ok(pageText.includes('class="tipjar"'));
+assert.ok(pageText.includes('Tips appreciated'));
+
+// The tip page: four services, links dormant until real addresses are pasted in /editor.
+const tips = await worker.fetch(new Request('https://datedrop.example/tips'));
+assert.equal(tips.status, 200);
+const tipsText = await tips.text();
+for (const name of ['Venmo', 'PayPal', 'Zelle', 'Cash App']) {
+  assert.ok(tipsText.includes(name), 'tip service missing: ' + name);
+}
+assert.equal((tipsText.match(/Link coming soon/g) || []).length, 4);
+
+// A pasted address turns its card's button live — and only http(s) is accepted.
+const tipStore = new Map();
+const tipEnv = {
+  DD_PASSPHRASE: 'test-pass-123',
+  FEEDBACK: {
+    get: async (k) => tipStore.has(k) ? tipStore.get(k) : null,
+    put: async (k, v) => { tipStore.set(k, v); },
+    delete: async (k) => { tipStore.delete(k); }
+  }
+};
+const tipLogin = await worker.fetch(new Request('https://datedrop.example/editor/login', {
+  method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: 'p=test-pass-123'
+}), tipEnv);
+const tipCookie = tipLogin.headers.get('set-cookie').split(';')[0];
+await worker.fetch(new Request('https://datedrop.example/editor/save', {
+  method: 'POST', headers: { 'content-type': 'application/json', Cookie: tipCookie },
+  body: JSON.stringify({ tipVenmo: 'https://venmo.com/u/example', tipZelle: 'javascript:alert(1)' })
+}), tipEnv);
+const tipsLive = await (await worker.fetch(new Request('https://datedrop.example/tips'), tipEnv)).text();
+assert.ok(tipsLive.includes('href="https://venmo.com/u/example"'), 'venmo link not live');
+assert.ok(!tipsLive.includes('javascript:alert'), 'non-http address must never become a link');
+assert.equal((tipsLive.match(/Link coming soon/g) || []).length, 3);
+
 // Dark/light: the toggle button, the saved-choice script, and the dark palette are served.
 assert.ok(pageText.includes('id="theme"'), 'theme toggle button missing');
 assert.ok(pageText.includes("localStorage.getItem('dd-theme')"), 'saved-theme script missing');
