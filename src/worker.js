@@ -812,7 +812,10 @@ async function editorRoute(request, env, url) {
 
   if (url.pathname === '/editor/login') {
     if (request.method !== 'POST') return editorLoginPage(null, 405);
-    const form = await request.formData();
+    let form;
+    try { form = await request.formData(); } catch {
+      return editorLoginPage('That passphrase is not correct.', 400);
+    }
     const given = String(form.get('p') ?? '');
     if (constantTimeEqual(given, passphrase)) {
       return new Response(null, {

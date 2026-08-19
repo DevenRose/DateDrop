@@ -253,6 +253,12 @@ const badLogin = await worker.fetch(new Request('https://datedrop.example/editor
 }), edEnv);
 assert.equal(badLogin.status, 401);
 
+// A login with no form body at all is refused politely, not with a server error.
+const emptyLogin = await worker.fetch(new Request('https://datedrop.example/editor/login', {
+  method: 'POST'
+}), edEnv);
+assert.equal(emptyLogin.status, 400);
+
 // The right passphrase sets the session cookie.
 const goodLogin = await worker.fetch(new Request('https://datedrop.example/editor/login', {
   method: 'POST',
