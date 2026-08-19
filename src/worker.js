@@ -288,11 +288,16 @@ const TEXT_DEFAULTS = {
   titleLabel: 'Event name (optional)',
   datesLabel: 'Your dates, one per line',
   copyButton: 'Copy for email',
-  privacy: 'Nothing you type here is saved or sent anywhere. This page only builds links.',
+  privacy: 'ZERO data collection; this page ONLY builds links!',
   feedbackLink: 'Report a bug or suggest an improvement',
   attribution1: 'A free tool offered by DRVI for anyone to use.',
   attribution2: 'If you have software development needs, consider reaching out!',
-  shareText: 'Check out this neat little tool that turns written dates into calendar links'
+  shareText: 'Check out this neat little tool that turns written dates into calendar links',
+  tipsLine: 'Tips appreciated',
+  tipVenmo: '',
+  tipPaypal: '',
+  tipZelle: '',
+  tipCashapp: ''
 };
 
 const FIELD_LABELS = {
@@ -304,11 +309,16 @@ const FIELD_LABELS = {
   titleLabel: 'Label over the event-name box',
   datesLabel: 'Label over the dates box',
   copyButton: 'The copy button',
-  privacy: 'The privacy line at the bottom',
+  privacy: 'The zero-data line above the event-name box',
   feedbackLink: 'The feedback link in the footer',
   attribution1: 'Attribution line 1',
   attribution2: 'Attribution line 2 (the email address stays attached after it)',
-  shareText: 'The message sent along by the share icons'
+  shareText: 'The message sent along by the share icons',
+  tipsLine: 'The tip-jar line',
+  tipVenmo: 'Venmo tip link (paste the full URL; empty shows "coming soon")',
+  tipPaypal: 'PayPal tip link (paste the full URL; empty shows "coming soon")',
+  tipZelle: 'Zelle tip link (paste the full URL; empty shows "coming soon")',
+  tipCashapp: 'Cash App tip link (paste the full URL; empty shows "coming soon")'
 };
 
 function escHtml(s) {
@@ -354,7 +364,7 @@ const PAGE_HTML = String.raw`<!doctype html>
     --card: #ffffff; --line: #c3cad4; --card-line: #d8dee6;
     --accent: #155ab6; --btn-bg: #155ab6; --btn-hover: #124c99; --btn-ink: #ffffff;
     --ok: #1c7c3c; --err: #b02a2a; --err-bg: #fdf3f3; --err-line: #e05252;
-    --all-bg: #f2f7fe;
+    --all-bg: #f2f7fe; --zero: #b23c00;
     --brand-bg: #101010; --brand-ink: #e8e8e8; --brand-link: #ffb35c;
   }
   @media (prefers-color-scheme: dark) {
@@ -363,7 +373,7 @@ const PAGE_HTML = String.raw`<!doctype html>
       --card: #1d242d; --line: #3a4552; --card-line: #313a46;
       --accent: #7db3ff; --btn-bg: #2e6ad1; --btn-hover: #3d79e0; --btn-ink: #ffffff;
       --ok: #6fce8f; --err: #ff9b9b; --err-bg: #2c1a1d; --err-line: #a04747;
-      --all-bg: #1a2536;
+      --all-bg: #1a2536; --zero: #ffb35c;
       --brand-bg: #101010; --brand-ink: #e8e8e8; --brand-link: #ffb35c;
     }
   }
@@ -372,7 +382,7 @@ const PAGE_HTML = String.raw`<!doctype html>
     --card: #1d242d; --line: #3a4552; --card-line: #313a46;
     --accent: #7db3ff; --btn-bg: #2e6ad1; --btn-hover: #3d79e0; --btn-ink: #ffffff;
     --ok: #6fce8f; --err: #ff9b9b; --err-bg: #2c1a1d; --err-line: #a04747;
-    --all-bg: #1a2536;
+    --all-bg: #1a2536; --zero: #ffb35c;
     --brand-bg: #101010; --brand-ink: #e8e8e8; --brand-link: #ffb35c;
   }
   body { margin: 0; background: var(--bg); color: var(--ink); font-family: 'Segoe UI', Arial, sans-serif; }
@@ -407,7 +417,12 @@ const PAGE_HTML = String.raw`<!doctype html>
     cursor: pointer; display: none; }
   #copy:hover { background: var(--btn-hover); }
   #copied { margin-left: 12px; color: var(--ok); font-weight: 600; }
-  .privacy { margin: 8px 0 0; color: var(--faint); font-size: 13px; }
+  .zero { margin: 10px 0 2px; color: var(--zero); font-weight: 700; font-size: 14.5px; }
+  .tipjar { display: inline-flex; align-items: center; gap: 8px; margin-top: 16px;
+    padding: 9px 14px; border: 1px solid var(--card-line); border-radius: 10px;
+    background: var(--card); color: var(--accent); font-weight: 600; font-size: 15px;
+    text-decoration: none; }
+  .tipjar:hover { border-color: var(--accent); }
   footer { max-width: 760px; margin: 0 auto; padding: 0 18px 24px; }
   .share { display: flex; align-items: center; gap: 10px; margin: 4px 0 14px; }
   .share a { display: inline-flex; border-radius: 5px; }
@@ -441,6 +456,7 @@ const PAGE_HTML = String.raw`<!doctype html>
     <li>{{how2}}</li>
     <li>{{how3}}</li>
   </ol>
+  <p class="zero">{{privacy}}</p>
 
   <label for="title">{{titleLabel}}</label>
   <input id="title" placeholder="Event">
@@ -453,7 +469,7 @@ const PAGE_HTML = String.raw`<!doctype html>
 
   <button id="copy">{{copyButton}}</button><span id="copied"></span>
 
-  <p class="privacy">{{privacy}}</p>
+  <a class="tipjar" href="/tips"><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.7" d="M7 6.5h10M8 6.5c-1 1.6-1.6 2.6-1.6 4.4v6.1c0 2 1.4 3 3 3h5.2c1.6 0 3-1 3-3v-6.1c0-1.8-.6-2.8-1.6-4.4"/><rect x="9" y="3.6" width="6" height="2.2" rx="1" fill="currentColor"/><circle cx="12" cy="14" r="2.6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M11 14h2" stroke="currentColor" stroke-width="1.3"/></svg><span>{{tipsLine}}</span></a>
 </main>
 ${FOOTER_HTML.replace('${LOGO}', LOGO_DATA)}
 <script>
@@ -771,6 +787,73 @@ ${THEME_SCRIPT}
 </body>
 </html>
 `;
+
+// ---------------------------------------------------------------------------------------
+// The tip page. Four ways to send a direct payment. The links are editable fields in
+// /editor (empty shows "coming soon"); only a real http(s) address ever becomes a link.
+// The QR squares are placeholders until the real addresses exist, then the codes are
+// baked in as images.
+const TIP_SERVICES = [
+  { key: 'tipVenmo', name: 'Venmo', color: '#3D95CE', badge: 'V' },
+  { key: 'tipPaypal', name: 'PayPal', color: '#0070BA', badge: 'P' },
+  { key: 'tipZelle', name: 'Zelle', color: '#6D1ED4', badge: 'Z' },
+  { key: 'tipCashapp', name: 'Cash App', color: '#00D632', badge: '$' }
+];
+
+function tipsPage(texts) {
+  const cards = TIP_SERVICES.map((s) => {
+    const url = String(texts[s.key] || '').trim();
+    const live = /^https?:\/\//i.test(url);
+    const action = live
+      ? '<a class="open" href="' + escHtml(url) + '" target="_blank" rel="noopener">Open ' + s.name + '</a>'
+      : '<div class="soon">Link coming soon</div>';
+    return '<div class="tipcard">' +
+      '<div class="tiphead"><span class="tbadge" style="background:' + s.color + '">' + s.badge + '</span>' +
+      '<span class="tipname">' + s.name + '</span></div>' +
+      action +
+      '<div class="qr">QR<br><small>' + (live ? 'code arrives shortly' : 'arrives with the link') + '</small></div>' +
+      '</div>';
+  }).join('');
+  const body = `<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DateDrop tips</title>
+<style>
+${THEME_CSS}
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 'Segoe UI', Arial, sans-serif; }
+  main { max-width: 620px; margin: 0 auto; padding: 28px 18px 60px; }
+  h1 { font-size: 24px; margin: 0 0 6px; }
+  p.sub { color: var(--muted); margin: 0 0 20px; }
+  .tipgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+  .tipcard { background: var(--card); border: 1px solid var(--card-line); border-radius: 12px;
+    padding: 16px; display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+  .tiphead { display: flex; align-items: center; gap: 10px; }
+  .tbadge { display: inline-flex; align-items: center; justify-content: center; width: 34px;
+    height: 34px; border-radius: 9px; color: #fff; font-weight: 700; font-size: 17px; }
+  .tipname { font-weight: 700; font-size: 17px; }
+  .open { padding: 8px 16px; border-radius: 8px; background: var(--btn-bg); color: var(--btn-ink);
+    font-weight: 600; text-decoration: none; }
+  .open:hover { background: var(--btn-hover); }
+  .soon { color: var(--faint); font-size: 14px; font-weight: 600; padding: 8px 0; }
+  .qr { width: 120px; height: 120px; border: 2px dashed var(--line); border-radius: 10px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    color: var(--faint); font-weight: 700; text-align: center; }
+  .qr small { font-weight: 400; font-size: 11.5px; max-width: 100px; }
+  .back { display: inline-block; margin-top: 22px; color: var(--accent); font-weight: 600; }
+</style>
+${THEME_SCRIPT}
+</head><body>
+<main>
+  <h1>${escHtml(texts.tipsLine)}</h1>
+  <p class="sub">DateDrop is free. If it saved you some time and you feel like it, a tip
+     goes straight to the person who built and runs it.</p>
+  <div class="tipgrid">${cards}</div>
+  <a class="back" href="/">Back to DateDrop</a>
+</main>
+</body></html>`;
+  return new Response(body, { headers: PAGE_HEADERS });
+}
 
 // ---------------------------------------------------------------------------------------
 // The /editor gate. Same design as the operationrosebush.xyz front door: the passphrase
@@ -1206,6 +1289,10 @@ export default {
       const overrides = await loadTextOverrides(env);
       return new Response(renderPage(PAGE_HTML, { ...TEXT_DEFAULTS, ...overrides }),
         { headers: PAGE_HEADERS });
+    }
+    if (url.pathname === '/tips') {
+      const overrides = await loadTextOverrides(env);
+      return tipsPage({ ...TEXT_DEFAULTS, ...overrides });
     }
     if (url.pathname === '/editor' || url.pathname.startsWith('/editor/')) {
       return editorRoute(request, env, url);
