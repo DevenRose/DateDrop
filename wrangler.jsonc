@@ -1,8 +1,18 @@
-// DateDrop — Cloudflare Worker settings. Free plan; no storage, no secrets, no bindings.
+// DateDrop — Cloudflare Worker settings. Free plan; no secrets.
+// The two routes put the Worker on datedrop.devenroseventures.com (the tool) and on the
+// bare devenroseventures.com (which it forwards to www, where the DRVI Google Site lives).
+// FEEDBACK is the key-value store holding screened visitor feedback.
 {
   "name": "datedrop",
   "main": "src/worker.js",
   "compatibility_date": "2026-08-01",
   "workers_dev": true,
-  "observability": { "enabled": true }
+  "observability": { "enabled": true },
+  "routes": [
+    { "pattern": "datedrop.devenroseventures.com/*", "zone_name": "devenroseventures.com" },
+    { "pattern": "devenroseventures.com/*", "zone_name": "devenroseventures.com" }
+  ],
+  "kv_namespaces": [
+    { "binding": "FEEDBACK", "id": "107db49219724a65b665811a769bbb32" }
+  ]
 }
