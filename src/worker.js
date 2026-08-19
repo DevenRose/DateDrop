@@ -793,8 +793,12 @@ ${THEME_SCRIPT}
 // /editor (empty shows "coming soon"); only a real http(s) address ever becomes a link.
 // The QR squares are placeholders until the real addresses exist, then the codes are
 // baked in as images.
+// A card's QR image is baked for one exact address (qrFor). It is only shown while the
+// stored link still equals that address, so a changed link can never sit next to a QR
+// code pointing somewhere else.
 const TIP_SERVICES = [
-  { key: 'tipVenmo', name: 'Venmo', color: '#3D95CE', badge: 'V' },
+  { key: 'tipVenmo', name: 'Venmo', color: '#3D95CE', badge: 'V',
+    qrFor: 'https://venmo.com/u/DRVI-PBC', qr: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPAAAADwCAYAAAA+VemSAAAAAklEQVR4AewaftIAAAaPSURBVO3B0Y3rWhIEwayG/He59hrA80GAI6r3ZUT6D5JWGiStNUhaa5C01iBprUHSWoOktQZJaw2S1hokrTVIWmuQtNYgaa1B0lqDpLUGSWsNktYaJK01SFprkLTWIGmtQdJag6S1BklrDZLWGiSt9eFLkrBRW96UhJO23JWEp7TlG5KwUVv+2iBprUHSWoOktQZJaw2S1hokrfXhB7TlTUl4UhKutOUkCVfa8qS23JWEK0m4qy1PasubkvCmQdJag6S1BklrDZLWGiSt9eGHJeFJbXlKEk7aciUJJ225koSTtlxJwklbriThrrbclYSTtjwlCU9qyy8aJK01SFprkLTWIGmtQdJag6S1PuhxSbjSlpMkPKUtT2rLXUnQ3xskrTVIWmuQtNYgaa1B0lof9Li2XEnCSVuuJOEkCU9py0kS7mqL/t4gaa1B0lqDpLUGSWsNktYaJK314Ye15f9JW06S8KYknLTlriTc1ZantOW/YJC01iBprUHSWoOktQZJa334AUn4L0jCSVuuJOGkLVeScNKWK0m4KwknbbmShCcl4b9skLTWIGmtQdJag6S1BklrDZLWSv9BtyXhrrY8KQlX2nKShCtteVIS7mqL7hkkrTVIWmuQtNYgaa1B0lofviQJJ225koS3teVKW06ScFcSrrTlpC1XkvCr2nJXEt7Wll80SFprkLTWIGmtQdJag6S1Bklrpf+gRyXhSltOknBXW+5Kwje05UoS3taWpyThpC1/bZC01iBprUHSWoOktQZJa334AUm4qy1XkvCktjwlCW9ry11JuNKWu9pyVxJ+VVveNEhaa5C01iBprUHSWoOktQZJa334P9OWkyRcactJEr6hLU9JwklbriThpC1XknDSlje15SQJV9pykoQrbXnTIGmtQdJag6S1BklrDZLW+vAlSbirLSdJuNKWu5JwV1tOkvCmtjwpCd+QhCtt+YYknLTlFw2S1hokrTVIWmuQtNYgaa1B0lofvqQtJ0m4koRvaMuT2nJXEq605SQJT2nLSRKutOUkCVfaclcSntSWpyThpC1/bZC01iBprUHSWoOktQZJa334YW35hiT81yXhpC1XknDSlitJOGnLlSSctOWuJNzVlittedMgaa1B0lqDpLUGSWsNktYaJK314UuS8A1JOGnLXUm40paTJFxpy11JuKstJ0m40pa3JeGuJFxpy0lb7krClba8aZC01iBprUHSWoOktQZJa334YUm4qy0nSXhTEp7UlitJ2Kgt35CEu9ryiwZJaw2S1hokrTVIWmuQtNYgaa30H74gCSdteUoSTtpyVxLuasuvSsJT2nKShF/VlitJOGnLlSSctOWvDZLWGiStNUhaa5C01iBprQ8/LAlPSsJT2nKShCttuSsJJ225qy1PScJJW64k4a62nCThTW150yBprUHSWoOktQZJaw2S1hokrfXh/0xbTpJwpS3fkIS72nJXEk7aciUJJ225Kwl3teVKEr6hLSdJuNKWNw2S1hokrTVIWmuQtNYgaa0PP6wtJ0m4koSTtlxJwl1tuastJ0m4koSTtlxpy0ZJeFMS7krCSVv+2iBprUHSWoOktQZJaw2S1hokrZX+g25Lwje05SQJT2nLSRLuasuVJJy05SlJeFtb/togaa1B0lqDpLUGSWsNktb68CVJ2KgtV9pykoS72nIlCd+QhLvacpKEpyThpC3f0JZfNEhaa5C01iBprUHSWoOktQZJa334AW15UxLuSsJJW97UlpMkXGnLSRKuJOGkLVeScFdbntSWpyThpC1/bZC01iBprUHSWoOktQZJa334YUl4Ulu+IQl3teVKW+5KwpPa8g1JeFMS7mrLmwZJaw2S1hokrTVIWmuQtNYgaa0P+pq2nCThSlvuastJEq4k4aQtV5JwV1veloS72vKLBklrDZLWGiStNUhaa5C01gd9TRLuSsJJW+5qy5uSsFESrrTlTYOktQZJaw2S1hokrTVIWmuQtNaHH9aWX9WWJyXhriRcactdSThpy5W23JWEk7ZcScJJW+5KwpW2nCThFw2S1hokrTVIWmuQtNYgaa0PPyAJ2yThpC1vSsJJW56ShLva8qQkPCUJJ235RYOktQZJaw2S1hokrTVIWmuQtFb6D5JWGiStNUhaa5C01iBprUHSWoOktQZJaw2S1hokrTVIWmuQtNYgaa1B0lqDpLUGSWsNktYaJK01SFprkLTWIGmtQdJag6S1BklrDZLW+h9YWSEQiSoOsAAAAABJRU5ErkJggg==' },
   { key: 'tipPaypal', name: 'PayPal', color: '#0070BA', badge: 'P' },
   { key: 'tipZelle', name: 'Zelle', color: '#6D1ED4', badge: 'Z' },
   { key: 'tipCashapp', name: 'Cash App', color: '#00D632', badge: '$' }
@@ -807,11 +811,13 @@ function tipsPage(texts) {
     const action = live
       ? '<a class="open" href="' + escHtml(url) + '" target="_blank" rel="noopener">Open ' + s.name + '</a>'
       : '<div class="soon">Link coming soon</div>';
+    const qrBox = (live && s.qr && url === s.qrFor)
+      ? '<img class="qrimg" src="' + s.qr + '" alt="QR code for ' + s.name + '" width="120" height="120">'
+      : '<div class="qr">QR<br><small>' + (live ? 'code arrives shortly' : 'arrives with the link') + '</small></div>';
     return '<div class="tipcard">' +
       '<div class="tiphead"><span class="tbadge" style="background:' + s.color + '">' + s.badge + '</span>' +
       '<span class="tipname">' + s.name + '</span></div>' +
-      action +
-      '<div class="qr">QR<br><small>' + (live ? 'code arrives shortly' : 'arrives with the link') + '</small></div>' +
+      action + qrBox +
       '</div>';
   }).join('');
   const body = `<!doctype html>
@@ -840,6 +846,8 @@ ${THEME_CSS}
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     color: var(--faint); font-weight: 700; text-align: center; }
   .qr small { font-weight: 400; font-size: 11.5px; max-width: 100px; }
+  .qrimg { width: 120px; height: 120px; border-radius: 10px; background: #fff; padding: 5px;
+    box-sizing: border-box; }
   .back { display: inline-block; margin-top: 22px; color: var(--accent); font-weight: 600; }
 </style>
 ${THEME_SCRIPT}
