@@ -223,4 +223,106 @@ assert.equal(sixth.status, 429);
 const noStore = await worker.fetch(fbRequest({ kind: 'bug', message: 'Where does this go?' }), {});
 assert.equal(noStore.status, 503);
 
+// ---- The /editor gate and live wording ----
+const kvStore = new Map();
+const edEnv = {
+  DD_PASSPHRASE: 'test-pass-123',
+  FEEDBACK: {
+    get: async (k) => kvStore.has(k) ? kvStore.get(k) : null,
+    put: async (k, v) => { kvStore.set(k, v); },
+    delete: async (k) => { kvStore.delete(k); }
+  }
+};
+
+// With no passphrase configured, the editor serves nothing.
+const unconfigured = await worker.fetch(new Request('https://datedrop.example/editor'), {});
+assert.equal(unconfigured.status, 503);
+
+// Without the cookie: the login page, and nothing of the editor.
+const anon = await worker.fetch(new Request('https://datedrop.example/editor'), edEnv);
+assert.equal(anon.status, 401);
+const anonText = await anon.text();
+assert.ok(anonText.includes('Passphrase'));
+assert.ok(!anonText.includes('Edit the words'));
+
+// A wrong passphrase is refused (this check pays the deliberate 750 ms delay once).
+const badLogin = await worker.fetch(new Request('https://datedrop.example/editor/login', {
+  method: 'POST',
+  headers: { 'content-type': 'application/x-www-form-urlencoded' },
+  body: 'p=wrong-guess'
+}), edEnv);
+assert.equal(badLogin.status, 401);
+
+// The right passphrase sets the session cookie.
+const goodLogin = await worker.fetch(new Request('https://datedrop.example/editor/login', {
+  method: 'POST',
+  headers: { 'content-type': 'application/x-www-form-urlencoded' },
+  body: 'p=test-pass-123'
+}), edEnv);
+assert.equal(goodLogin.status, 303);
+const setCookie = goodLogin.headers.get('set-cookie');
+assert.ok(setCookie && setCookie.includes('dd_editor='));
+assert.ok(setCookie.includes('HttpOnly'));
+const cookieValue = setCookie.split(';')[0];
+
+// A forged cookie does not open the editor.
+const forged = await worker.fetch(new Request('https://datedrop.example/editor', {
+  headers: { Cookie: 'dd_editor=0000000000000000000000000000000000000000000000000000000000000000' }
+}), edEnv);
+assert.equal(forged.status, 401);
+
+// The real cookie opens the editor with every field listed.
+const editor = await worker.fetch(new Request('https://datedrop.example/editor', {
+  headers: { Cookie: cookieValue }
+}), edEnv);
+assert.equal(editor.status, 200);
+const editorText = await editor.text();
+assert.ok(editorText.includes('Edit the words on DateDrop'));
+assert.ok(editorText.includes('Attribution line 1'));
+
+// Saving a change puts the new words on the page at once.
+const save = await worker.fetch(new Request('https://datedrop.example/editor/save', {
+  method: 'POST',
+  headers: { 'content-type': 'application/json', Cookie: cookieValue },
+  body: JSON.stringify({ lead: 'Paste dates. Get calendar links.', heading: 'DateDrop' })
+}), edEnv);
+assert.equal(save.status, 200);
+const editedPage = await (await worker.fetch(new Request('https://datedrop.example/'), edEnv)).text();
+assert.ok(editedPage.includes('Paste dates. Get calendar links.'));
+assert.ok(!editedPage.includes('ready for your email.'));
+
+// Saving without the cookie is refused and changes nothing.
+const saveAnon = await worker.fetch(new Request('https://datedrop.example/editor/save', {
+  method: 'POST',
+  headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({ lead: 'defaced' })
+}), edEnv);
+assert.equal(saveAnon.status, 401);
+assert.ok(!(await (await worker.fetch(new Request('https://datedrop.example/'), edEnv)).text()).includes('defaced'));
+
+// Emptying every box removes the stored overrides; the originals come back.
+await worker.fetch(new Request('https://datedrop.example/editor/save', {
+  method: 'POST',
+  headers: { 'content-type': 'application/json', Cookie: cookieValue },
+  body: JSON.stringify({ lead: '' })
+}), edEnv);
+assert.equal(kvStore.has('txt:overrides'), false);
+const restored = await (await worker.fetch(new Request('https://datedrop.example/'), edEnv)).text();
+assert.ok(restored.includes('ready for your email.'));
+
+// Wording someone typed can never become working page markup — it is always escaped.
+await worker.fetch(new Request('https://datedrop.example/editor/save', {
+  method: 'POST',
+  headers: { 'content-type': 'application/json', Cookie: cookieValue },
+  body: JSON.stringify({ lead: '<script>alert(1)</script>' })
+}), edEnv);
+const escaped = await (await worker.fetch(new Request('https://datedrop.example/'), edEnv)).text();
+assert.ok(!escaped.includes('<script>alert(1)'));
+assert.ok(escaped.includes('&lt;script&gt;alert(1)'));
+await worker.fetch(new Request('https://datedrop.example/editor/save', {
+  method: 'POST',
+  headers: { 'content-type': 'application/json', Cookie: cookieValue },
+  body: JSON.stringify({})
+}), edEnv);
+
 console.log('All DateDrop checks passed.');
