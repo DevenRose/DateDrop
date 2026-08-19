@@ -378,6 +378,7 @@ const PAGE_HTML = String.raw`<!doctype html>
   body { margin: 0; background: var(--bg); color: var(--ink); font-family: 'Segoe UI', Arial, sans-serif; }
   main { max-width: 760px; margin: 0 auto; padding: 20px 18px 16px; position: relative; }
   h1 { font-size: 26px; margin: 0 0 4px; }
+  .brand h1 { font-size: 22px; margin: 0 0 3px; color: var(--brand-ink); }
   #theme { margin-left: auto; flex-shrink: 0; width: 42px; height: 42px;
     border-radius: 50%; border: 1px solid #3a4552; background: #1d242d;
     font-size: 18px; cursor: pointer; line-height: 1; }
@@ -427,13 +428,13 @@ const PAGE_HTML = String.raw`<!doctype html>
   <div class="brand">
     <img src="${LOGO_DATA}" alt="DRVI logo" width="56" height="56">
     <div class="brandtext">
+      <h1>{{heading}}</h1>
       <div>{{attribution1}}</div>
       <div>{{attribution2}}
         <a href="mailto:deven@devenroseventures.com">deven@devenroseventures.com</a></div>
     </div>
     <button id="theme" aria-label="Switch between dark and light"></button>
   </div>
-  <h1>{{heading}}</h1>
   <p class="lead">{{lead}}</p>
   <ol class="how">
     <li>{{how1}}</li>
