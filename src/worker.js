@@ -260,24 +260,89 @@ const LOGO_DATA = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHgAAAB4CAYAAAA
 
 const FOOTER_HTML = String.raw`
 <footer>
-  <p class="fblink"><a href="/feedback">Report a bug or suggest an improvement</a></p>
+  <p class="fblink"><a href="/feedback">{{feedbackLink}}</a></p>
   <div class="brand">
     <img src="${'${LOGO}'}" alt="DRVI logo" width="56" height="56">
     <div class="brandtext">
-      <div>A free tool offered by DRVI for anyone to use.</div>
-      <div>If you have software development needs, consider reaching out!
+      <div>{{attribution1}}</div>
+      <div>{{attribution2}}
         <a href="mailto:deven@devenroseventures.com">deven@devenroseventures.com</a></div>
     </div>
   </div>
 </footer>
 `;
 
+// Every visible line of prose on the page, by name. The /editor page (passphrase-gated)
+// lets Captain change any of these on the fly; changes live in the key-value store under
+// "txt:overrides" and show on the next page view — no redeploy. An emptied box, or words
+// identical to the original, puts the original back.
+const TEXT_DEFAULTS = {
+  heading: 'DateDrop',
+  lead: 'Paste your list of dates and get add-to-calendar links, ready for your email.',
+  how1: 'Type an event name (optional).',
+  how2: 'Paste your dates below, one per line, just as you write them.',
+  how3: 'Press "Copy for email" and paste the result into your email.',
+  titleLabel: 'Event name (optional)',
+  datesLabel: 'Your dates, one per line',
+  copyButton: 'Copy for email',
+  privacy: 'Nothing you type here is saved or sent anywhere. This page only builds links.',
+  feedbackLink: 'Report a bug or suggest an improvement',
+  attribution1: 'A free tool offered by DRVI for anyone to use.',
+  attribution2: 'If you have software development needs, consider reaching out!'
+};
+
+const FIELD_LABELS = {
+  heading: 'Page title (browser tab and headline)',
+  lead: 'The one-line description under the headline',
+  how1: 'How-to step 1',
+  how2: 'How-to step 2',
+  how3: 'How-to step 3',
+  titleLabel: 'Label over the event-name box',
+  datesLabel: 'Label over the dates box',
+  copyButton: 'The copy button',
+  privacy: 'The privacy line at the bottom',
+  feedbackLink: 'The feedback link in the footer',
+  attribution1: 'Attribution line 1',
+  attribution2: 'Attribution line 2 (the email address stays attached after it)'
+};
+
+function escHtml(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+async function loadTextOverrides(env) {
+  try {
+    if (!env || !env.FEEDBACK) return {};
+    const raw = await env.FEEDBACK.get('txt:overrides');
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    const out = {};
+    for (const k of Object.keys(TEXT_DEFAULTS)) {
+      if (typeof parsed[k] === 'string' && parsed[k].trim() !== '') {
+        out[k] = parsed[k].slice(0, 500);
+      }
+    }
+    return out;
+  } catch {
+    return {}; // broken overrides must never break the page — originals render instead
+  }
+}
+
+function renderPage(template, texts) {
+  let html = template;
+  for (const k of Object.keys(TEXT_DEFAULTS)) {
+    html = html.split('{{' + k + '}}').join(escHtml(texts[k]));
+  }
+  return html;
+}
+
 const PAGE_HTML = String.raw`<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>DateDrop</title>
+<title>{{heading}}</title>
 <style>
   body { margin: 0; background: #f5f6f8; color: #1c2430; font-family: 'Segoe UI', Arial, sans-serif; }
   main { max-width: 760px; margin: 0 auto; padding: 28px 18px 40px; }
@@ -318,26 +383,26 @@ const PAGE_HTML = String.raw`<!doctype html>
 </head>
 <body>
 <main>
-  <h1>DateDrop</h1>
-  <p class="lead">Paste your list of dates and get add-to-calendar links, ready for your email.</p>
+  <h1>{{heading}}</h1>
+  <p class="lead">{{lead}}</p>
   <ol class="how">
-    <li>Type an event name (optional).</li>
-    <li>Paste your dates below, one per line, just as you write them.</li>
-    <li>Press <strong>Copy for email</strong> and paste the result into your email.</li>
+    <li>{{how1}}</li>
+    <li>{{how2}}</li>
+    <li>{{how3}}</li>
   </ol>
 
-  <label for="title">Event name (optional)</label>
+  <label for="title">{{titleLabel}}</label>
   <input id="title" placeholder="Event">
 
-  <label for="dates">Your dates, one per line</label>
+  <label for="dates">{{datesLabel}}</label>
   <textarea id="dates" placeholder="Saturday, August 22nd – 2:00pm to 9pm (extended venue)&#10;Sunday, August 23rd – 4:30pm to 9pm"></textarea>
 
   <div id="summary"></div>
   <div id="results"></div>
 
-  <button id="copy">Copy for email</button><span id="copied"></span>
+  <button id="copy">{{copyButton}}</button><span id="copied"></span>
 
-  <p class="privacy">Nothing you type here is saved or sent anywhere. This page only builds links.</p>
+  <p class="privacy">{{privacy}}</p>
 </main>
 ${FOOTER_HTML.replace('${LOGO}', LOGO_DATA)}
 <script>
@@ -572,6 +637,235 @@ const FEEDBACK_HTML = String.raw`<!doctype html>
 `;
 
 // ---------------------------------------------------------------------------------------
+// The /editor gate. Same design as the operationrosebush.xyz front door: the passphrase
+// lives only in the Worker secret DD_PASSPHRASE and in Captain's Windows credential
+// store — never in this file, never in Git. The browser holds a 12-hour cookie carrying
+// SHA-256("datedrop-editor-v1:" + passphrase), so this source alone cannot forge one.
+// A wrong guess waits 750 milliseconds; with no secret configured, the editor serves
+// nothing (fail closed). Only /editor is gated — the tool itself stays public.
+
+const EDITOR_COOKIE = 'dd_editor';
+const EDITOR_SESSION_SECONDS = 43200;
+const EDITOR_FAIL_DELAY_MS = 750;
+
+const EDITOR_HEADERS = {
+  'content-type': 'text/html; charset=utf-8',
+  'cache-control': 'no-store, no-cache, must-revalidate, private',
+  'x-frame-options': 'DENY',
+  'x-content-type-options': 'nosniff',
+  'referrer-policy': 'no-referrer',
+  'x-robots-tag': 'noindex, nofollow, noarchive, nosnippet',
+  'content-security-policy': "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; form-action 'self'"
+};
+
+const hexOf = (buf) =>
+  [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
+
+async function editorSessionToken(passphrase) {
+  const data = new TextEncoder().encode('datedrop-editor-v1:' + passphrase);
+  return hexOf(await crypto.subtle.digest('SHA-256', data));
+}
+
+function constantTimeEqual(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+function readCookie(header, name) {
+  if (!header) return null;
+  for (const part of header.split(';')) {
+    const eq = part.indexOf('=');
+    if (eq === -1) continue;
+    if (part.slice(0, eq).trim() === name) return part.slice(eq + 1).trim();
+  }
+  return null;
+}
+
+function editorLoginPage(message, status) {
+  const body = `<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>DateDrop editor</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100dvh; display: grid; place-items: center; padding: 24px;
+         background: #f5f6f8; color: #1c2430; font: 16px/1.6 'Segoe UI', Arial, sans-serif; }
+  form { width: 100%; max-width: 22rem; background: #fff; border: 1px solid #d8dee6;
+         border-radius: 14px; padding: 28px 24px; }
+  h1 { font-size: 1.15rem; margin: 0 0 .35rem; }
+  p.sub { margin: 0 0 1.5rem; color: #6a7686; font-size: .85rem; }
+  label { display: block; font-size: .8rem; color: #6a7686; margin-bottom: .4rem; }
+  input { width: 100%; padding: .8rem .9rem; font-size: 1rem; border: 1px solid #c3cad4;
+          border-radius: .55rem; }
+  button { width: 100%; margin-top: .9rem; padding: .8rem; font-size: 1rem; font-weight: 600;
+           color: #fff; background: #155ab6; border: 0; border-radius: .55rem; cursor: pointer; }
+  .err { margin-top: .9rem; padding: .6rem .75rem; border-radius: .5rem; font-size: .85rem;
+         color: #7a2233; background: #f7e9ec; border: 1px solid #e6c6ce; }
+</style>
+</head><body>
+<form method="POST" action="/editor/login">
+  <h1>DateDrop editor</h1>
+  <p class="sub">Private. A passphrase is required.</p>
+  <label for="p">Passphrase</label>
+  <input id="p" name="p" type="password" autocomplete="current-password"
+         autocapitalize="off" autocorrect="off" spellcheck="false" required autofocus>
+  <button type="submit">Open</button>
+  ${message ? `<div class="err">${escHtml(message)}</div>` : ''}
+</form>
+</body></html>`;
+  return new Response(body, { status, headers: EDITOR_HEADERS });
+}
+
+function editorPage(merged, overrides) {
+  const rows = Object.keys(TEXT_DEFAULTS).map((k) => {
+    const edited = Object.prototype.hasOwnProperty.call(overrides, k);
+    return '<label for="f_' + k + '">' + escHtml(FIELD_LABELS[k]) +
+      (edited ? ' <span class="edited">(edited)</span>' : '') + '</label>' +
+      '<textarea id="f_' + k + '" data-key="' + k + '" rows="2">' + escHtml(merged[k]) + '</textarea>' +
+      '<div class="orig">Original: ' + escHtml(TEXT_DEFAULTS[k]) + '</div>';
+  }).join('');
+  const body = `<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>DateDrop editor</title>
+<style>
+  body { margin: 0; background: #f5f6f8; color: #1c2430; font: 16px/1.6 'Segoe UI', Arial, sans-serif; }
+  main { max-width: 720px; margin: 0 auto; padding: 28px 18px 60px; }
+  h1 { font-size: 24px; margin: 0 0 6px; }
+  p.sub { color: #4a5568; margin: 0 0 18px; }
+  label { display: block; font-weight: 600; margin: 18px 0 4px; font-size: 15px; }
+  .edited { color: #b06a00; font-weight: 600; font-size: 13px; }
+  textarea { width: 100%; box-sizing: border-box; font: inherit; font-size: 15px;
+             padding: 8px 10px; border: 1px solid #c3cad4; border-radius: 8px; background: #fff; }
+  .orig { color: #8a94a3; font-size: 12.5px; margin-top: 2px; }
+  button { margin-top: 22px; font: inherit; font-size: 17px; font-weight: 600;
+           padding: 12px 22px; border: 0; border-radius: 10px; background: #155ab6;
+           color: #fff; cursor: pointer; }
+  #msg { margin-left: 12px; font-weight: 600; }
+  #msg.ok { color: #1c7c3c; } #msg.err { color: #b02a2a; }
+  .links { margin-top: 22px; font-size: 14px; }
+  .links a { color: #155ab6; margin-right: 16px; }
+</style>
+</head><body>
+<main>
+  <h1>Edit the words on DateDrop</h1>
+  <p class="sub">Change any line and press Save. The page shows the new words on its next
+     load. Emptying a box, or typing the original words, puts the original back.</p>
+  ${rows}
+  <button id="save">Save</button><span id="msg"></span>
+  <div class="links"><a href="/" target="_blank" rel="noopener">Open the page</a>
+    <a href="/editor/logout">Log out</a></div>
+</main>
+<script>
+(function () {
+  'use strict';
+  var btn = document.getElementById('save');
+  var msg = document.getElementById('msg');
+  btn.addEventListener('click', function () {
+    var data = {};
+    var areas = document.querySelectorAll('textarea[data-key]');
+    for (var i = 0; i < areas.length; i++) data[areas[i].getAttribute('data-key')] = areas[i].value;
+    btn.disabled = true;
+    fetch('/editor/save', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(data)
+    }).then(function (r) {
+      btn.disabled = false;
+      if (!r.ok) { msg.className = 'err'; msg.textContent = 'Save failed. Try again.'; return; }
+      msg.className = 'ok'; msg.textContent = 'Saved. The page shows the new words now.';
+    }).catch(function () {
+      btn.disabled = false;
+      msg.className = 'err'; msg.textContent = 'Save failed. Try again.';
+    });
+  });
+})();
+</script>
+</body></html>`;
+  return new Response(body, { headers: EDITOR_HEADERS });
+}
+
+async function editorRoute(request, env, url) {
+  const passphrase = env && env.DD_PASSPHRASE;
+  if (!passphrase) {
+    return new Response('The editor is not configured.', { status: 503 });
+  }
+  const expected = await editorSessionToken(passphrase);
+  const cookieHeader = 'dd_editor=%TOKEN%; HttpOnly; Secure; SameSite=Lax; Path=/editor';
+
+  if (url.pathname === '/editor/logout') {
+    return new Response(null, {
+      status: 303,
+      headers: {
+        Location: '/',
+        'Set-Cookie': EDITOR_COOKIE + '=; HttpOnly; Secure; SameSite=Lax; Path=/editor; Max-Age=0'
+      }
+    });
+  }
+
+  if (url.pathname === '/editor/login') {
+    if (request.method !== 'POST') return editorLoginPage(null, 405);
+    const form = await request.formData();
+    const given = String(form.get('p') ?? '');
+    if (constantTimeEqual(given, passphrase)) {
+      return new Response(null, {
+        status: 303,
+        headers: {
+          Location: '/editor',
+          'Set-Cookie': cookieHeader.replace('%TOKEN%', expected) + '; Max-Age=' + EDITOR_SESSION_SECONDS
+        }
+      });
+    }
+    await new Promise((r) => setTimeout(r, EDITOR_FAIL_DELAY_MS));
+    return editorLoginPage('That passphrase is not correct.', 401);
+  }
+
+  if (!constantTimeEqual(readCookie(request.headers.get('Cookie'), EDITOR_COOKIE) ?? '', expected)) {
+    return editorLoginPage(null, 401);
+  }
+
+  if (url.pathname === '/editor/save' && request.method === 'POST') {
+    if (!env.FEEDBACK) {
+      return new Response(JSON.stringify({ ok: false, error: 'The store is not connected.' }),
+        { status: 503, headers: { 'content-type': 'application/json' } });
+    }
+    const raw = await request.text();
+    if (raw.length > 20000) {
+      return new Response(JSON.stringify({ ok: false, error: 'Too long.' }),
+        { status: 400, headers: { 'content-type': 'application/json' } });
+    }
+    let body;
+    try { body = JSON.parse(raw); } catch {
+      return new Response(JSON.stringify({ ok: false, error: 'Not readable.' }),
+        { status: 400, headers: { 'content-type': 'application/json' } });
+    }
+    const overrides = {};
+    for (const k of Object.keys(TEXT_DEFAULTS)) {
+      if (typeof body[k] !== 'string') continue;
+      const v = stripControl(body[k]).trim().slice(0, 500);
+      if (v !== '' && v !== TEXT_DEFAULTS[k]) overrides[k] = v;
+    }
+    if (Object.keys(overrides).length > 0) {
+      await env.FEEDBACK.put('txt:overrides', JSON.stringify(overrides));
+    } else if (env.FEEDBACK.delete) {
+      await env.FEEDBACK.delete('txt:overrides');
+    }
+    return new Response(JSON.stringify({ ok: true }),
+      { status: 200, headers: { 'content-type': 'application/json' } });
+  }
+
+  const overrides = await loadTextOverrides(env);
+  return editorPage({ ...TEXT_DEFAULTS, ...overrides }, overrides);
+}
+
+// ---------------------------------------------------------------------------------------
 // Feedback screening. Submissions are stored as UNTRUSTED TEXT. These patterns do not
 // block a message — they mark it, so anything that looks like an attempt to smuggle
 // instructions to a person or an AI agent reading the feedback later arrives clearly
@@ -765,7 +1059,12 @@ export default {
     }
 
     if (url.pathname === '/') {
-      return new Response(PAGE_HTML, { headers: PAGE_HEADERS });
+      const overrides = await loadTextOverrides(env);
+      return new Response(renderPage(PAGE_HTML, { ...TEXT_DEFAULTS, ...overrides }),
+        { headers: PAGE_HEADERS });
+    }
+    if (url.pathname === '/editor' || url.pathname.startsWith('/editor/')) {
+      return editorRoute(request, env, url);
     }
     if (url.pathname === '/feedback') {
       if (request.method === 'POST') return feedbackPost(request, env);

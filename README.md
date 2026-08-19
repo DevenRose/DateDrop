@@ -57,6 +57,15 @@ One Cloudflare Worker, one source file: [src/worker.js](src/worker.js).
   then `npx wrangler kv key get <key> --namespace-id 107db49219724a65b665811a769bbb32`.
 - The Worker also answers for the bare `devenroseventures.com` and forwards those
   visitors to `https://www.devenroseventures.com`, where the DRVI Google Site lives.
+- `GET /editor` is Captain's passphrase-gated wording editor, the same gate design as
+  operationrosebush.xyz: the passphrase lives only in the Worker secret `DD_PASSPHRASE`
+  and in the Windows credential store on Lenny (entry `DateDrop:editor`; the same
+  passphrase as `Rosebush:preview`), the browser holds a 12-hour signed cookie, a wrong
+  guess waits 750 ms, and with no secret set the editor serves nothing. Every visible
+  line of prose on the page can be changed there; edits live in the key-value store
+  under `txt:overrides` and show on the next page view — no redeploy. An emptied box
+  puts the original words back, and edited wording is always HTML-escaped, so typed
+  text can never become working page markup.
 
 ## Working on it
 
