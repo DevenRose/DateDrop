@@ -1,0 +1,47 @@
+# CANONICAL DRVI .gitattributes — copy this into every new repo at hydrate.
+#
+# Copy it as `.gitattributes` in the repo root, then run `git add --renormalize .` before the first
+# commit. On a brand-new repo that command does nothing, which is the point: doing it at hydrate costs
+# nothing and doing it later costs a whole-file rewrite of everything.
+#
+# WHY THIS EXISTS
+# ---------------
+# Every text file marks the end of each line with an invisible character. Windows uses two of them;
+# Linux and macOS use one. Git stores whatever was committed. So when a file stored the Linux way is
+# edited on Windows, the editor rewrites EVERY line, and Git cannot tell "this line changed" from
+# "this line's invisible ending changed". A two-line edit is then committed as a whole-file rewrite.
+#
+# That is not cosmetic. The real change is buried, review becomes impossible, merges conflict on lines
+# nobody touched, and one person's work can be reverted without anyone seeing it happen.
+#
+# Recorded as PL-042 in `PAB-Memory:problem-log.md`. It was found four times in one session, once
+# turning a two-line edit to `PAB-Memory:SOTU.md` into a 195-line diff that had to be reverted and
+# redone by hand. On 2026-08-11 it was swept across every DRVI repository at once, which is exactly
+# the work this template exists to stop anyone ever having to do again.
+#
+# WHAT `text=auto eol=lf` MEANS
+# -----------------------------
+# Store text as LF in the repository regardless of the machine that wrote it. Working copies are
+# unaffected on every platform DRVI uses; only the stored blob is normalised. Verified on
+# `safeshine-wtc` and again across 29 repositories: `git diff --ignore-all-space` reported zero
+# non-whitespace differences every time.
+
+* text=auto eol=lf
+
+# Binary and generated files — never touch these. Normalising a binary corrupts it.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.pdf binary
+*.xlsx binary
+*.docx binary
+*.zip binary
+*.gz binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.mp4 binary
+*.grib2 binary

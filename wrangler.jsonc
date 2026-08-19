@@ -1,0 +1,8 @@
+// DateDrop — Cloudflare Worker settings. Free plan; no storage, no secrets, no bindings.
+{
+  "name": "datedrop",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-08-01",
+  "workers_dev": true,
+  "observability": { "enabled": true }
+}

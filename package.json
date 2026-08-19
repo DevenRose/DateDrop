@@ -1,0 +1,9 @@
+{
+  "name": "datedrop",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node tests/parser.test.mjs",
+    "deploy": "wrangler deploy"
+  }
+}
