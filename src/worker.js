@@ -267,6 +267,7 @@ const FOOTER_HTML = String.raw`
     <a data-net="whatsapp" aria-label="Share on WhatsApp" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="30" height="30"><rect width="24" height="24" rx="5" fill="#25D366"/><path fill="#fff" d="M7.4 6.2c.6-.6 1.5-.6 2 .1l1 1.3c.4.6.3 1.4-.2 1.9l-.5.5c.5 1 1.4 1.9 2.4 2.4l.5-.5c.5-.5 1.3-.6 1.9-.2l1.3 1c.7.5.7 1.4.1 2l-.7.7c-.6.6-1.5.8-2.3.5-1.7-.6-3.3-1.6-4.6-2.9-1.3-1.3-2.3-2.9-2.9-4.6-.3-.8-.1-1.7.5-2.3z"/></svg></a>
     <a data-net="linkedin" aria-label="Share on LinkedIn" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="30" height="30"><rect width="24" height="24" rx="5" fill="#0A66C2"/><text x="12" y="16.5" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="11" fill="#fff">in</text></svg></a>
     <a data-net="telegram" aria-label="Share on Telegram" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="30" height="30"><rect width="24" height="24" rx="5" fill="#229ED9"/><path fill="#fff" d="M5.5 11.8l12.1-5.1c.6-.25 1.15.3.95.9l-2.35 9.3c-.15.6-.7.75-1.15.4l-2.85-2.15-1.45 1.45c-.35.35-.9.2-1.05-.25l-.95-2.9-3.2-1.05c-.6-.2-.6-.95-.05-1.2z"/></svg></a>
+    <a data-net="bluesky" aria-label="Share on Bluesky" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="30" height="30"><rect width="24" height="24" rx="5" fill="#1185FE"/><path fill="#fff" d="M12 10.8C10.4 8 7.6 5.6 6 6c-1.4.4-1 3.6.3 5.4.8 1.2 2.3 2.3 3.7 2.7-1.4.5-2.6 1.5-2.3 2.8.4 1.4 2.7.8 4.3-1.4 1.6 2.2 3.9 2.8 4.3 1.4.3-1.3-.9-2.3-2.3-2.8 1.4-.4 2.9-1.5 3.7-2.7 1.3-1.8 1.7-5 .3-5.4-1.6-.4-4.4 2-6 4.8z"/></svg></a>
   </div>
   <p class="fblink"><a href="/feedback">{{feedbackLink}}</a></p>
   <div class="brand">
@@ -565,7 +566,8 @@ ${PARSER_SOURCE}
       whatsapp: 'https://wa.me/?text=' + encodeURIComponent(stext + ' ' + surl),
       linkedin: 'https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(surl),
       telegram: 'https://t.me/share/url?url=' + encodeURIComponent(surl) +
-        '&text=' + encodeURIComponent(stext)
+        '&text=' + encodeURIComponent(stext),
+      bluesky: 'https://bsky.app/intent/compose?text=' + encodeURIComponent(stext + ' ' + surl)
     };
     var shareAnchors = shareRow.querySelectorAll('a[data-net]');
     for (var s = 0; s < shareAnchors.length; s++) {
