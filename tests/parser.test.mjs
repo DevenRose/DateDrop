@@ -160,6 +160,17 @@ const tipsLive = await (await worker.fetch(new Request('https://datedrop.example
 assert.ok(tipsLive.includes('href="https://venmo.com/u/example"'), 'venmo link not live');
 assert.ok(!tipsLive.includes('javascript:alert'), 'non-http address must never become a link');
 assert.equal((tipsLive.match(/Link coming soon/g) || []).length, 3);
+// A QR is baked for one exact address: a different stored link never shows it.
+assert.ok(!tipsLive.includes('class="qrimg"'), 'QR must hide when the link differs from the baked address');
+
+// With the real DRVI Venmo address stored, the baked QR image is shown.
+await worker.fetch(new Request('https://datedrop.example/editor/save', {
+  method: 'POST', headers: { 'content-type': 'application/json', Cookie: tipCookie },
+  body: JSON.stringify({ tipVenmo: 'https://venmo.com/u/DRVI-PBC' })
+}), tipEnv);
+const tipsQr = await (await worker.fetch(new Request('https://datedrop.example/tips'), tipEnv)).text();
+assert.ok(tipsQr.includes('href="https://venmo.com/u/DRVI-PBC"'), 'DRVI venmo link not live');
+assert.ok(tipsQr.includes('class="qrimg"') && tipsQr.includes('data:image/png;base64,'), 'venmo QR image missing');
 
 // Dark/light: the toggle button, the saved-choice script, and the dark palette are served.
 assert.ok(pageText.includes('id="theme"'), 'theme toggle button missing');
