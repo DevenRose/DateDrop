@@ -4,7 +4,6 @@ Paste a list of dates, get "add to calendar" links for Google and Apple, ready t
 into an email. Built 2026-08-19 as a gift for a non-technical event organizer.
 
 **Live page:** https://datedrop.devenroseventures.com
-(also answers at https://datedrop.deven-5f7.workers.dev)
 
 ## How it is used
 
