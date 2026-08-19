@@ -24,9 +24,9 @@ link for google or apple."
   the iCalendar format, RFC 5545), as do Outlook and Google. An earlier step in this same
   session proved the format: an eight-event .ics built by hand was imported into Captain's
   Google Calendar successfully ("Great. done." — Captain, 2026-08-19).
-- Cloudflare Workers on this account already serve DRVI pages the same way (the Stream at
-  `drvi-stream.deven-5f7.workers.dev`), and `wrangler whoami` on Lenny showed the
-  signed-in account with Workers write permission before any build step ran.
+- Cloudflare Workers on this account already serve other DRVI pages the same way, and
+  `wrangler whoami` on Lenny showed the signed-in account with Workers write permission
+  before any build step ran.
 
 **(d) The candidates, and the proof.**
 1. **Google render link + this Worker serving .ics (chosen).** Works with one bookmark
